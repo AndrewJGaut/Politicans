@@ -161,7 +161,7 @@ def getVotesForAllBillsForOneYear(driver):
 
 
 
-    hrefs_for_votes_webpages = list()
+    hrefs_and_bills_for_votes_webpages = list()
 
     # get the relevant hrefs for the webpages
     for table_row in table.find_elements_by_tag_name('tr'):
@@ -176,9 +176,9 @@ def getVotesForAllBillsForOneYear(driver):
         # if it isn't, then just ignore this table row
         if isBill(current_bill):
 
-            # get the processed votes
+            # the the href for the relevant webpage with votes on it for the given bill
             curr_href = table_datas[0].find_element_by_tag_name('a').get_attribute('href')
-            hrefs_for_votes_webpages.append((curr_href, current_bill))
+            hrefs_and_bills_for_votes_webpages.append((curr_href, current_bill))
 
 
     '''
@@ -186,14 +186,19 @@ def getVotesForAllBillsForOneYear(driver):
     and add it to some structure (it'll be a JSON object that we'll use to get all the data)
     '''
     # now, get all the data from those pages
-    for href in hrefs_for_votes_webpages:
-        driver.get(href[0])
+    for href_and_bill in hrefs_and_bills_for_votes_webpages:
+        driver.get(href_and_bill[0])
         print(getSenatorVotesForOneBill(driver))
 
 
 
 
         # update the dictionary object
+
+
+
+    # stub
+    return None
 
 
 
