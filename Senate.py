@@ -25,7 +25,11 @@ class Bill:
         issue = table_datas[3].text
         date = table_datas[4].text
 
-        url = table_datas[3].find_element_by_tag_name('a').get_attribute('href')
+        url = None
+        try:
+            url = table_datas[3].find_element_by_tag_name('a').get_attribute('href')
+        except:
+            print("item with name {} has no relevant url".format(issue))
 
         return cls(vote, result, description, issue, date, url)
 
@@ -146,22 +150,20 @@ def getVotesForAllBillsForOneYear(driver):
 
 
 
-    # this is the name of the column in the table that gives us the name of what the senators voted on
-    # this will be used when we determine if its a bill or not
 
-    NAME_OF_COLUMN_FOR_ISSUE_NAME = "Issue"
+
 
     # these are prefixes for issue names that indicate that the issue is a bill
     PREFIXES_FOR_BILLS = ["H.R."]
 
-    # keys for the items we use to represent bills
-    return_dict = list()
 
     table = driver.find_element_by_id('listOfVotes')
 
-    # get the column header names of the table
-    #columns = [element.text for element in table.find_element_by_tag_name('thead').find_elements_by_tag_name('th')]
 
+
+    hrefs_for_votes_webpages = list()
+
+    # get the relevant hrefs for the webpages
     for table_row in table.find_elements_by_tag_name('tr'):
         table_datas = table_row.find_elements_by_tag_name('td')
 
@@ -175,18 +177,16 @@ def getVotesForAllBillsForOneYear(driver):
         if isBill(current_bill):
 
             # get the processed votes
-            #votes_url = '/'.join(driver.current_url.split('/')[:-1]) + table_datas[0].find_element_by_tag_name('a').get_attribute('href')
-            #driver.get(votes_url)
             curr_href = table_datas[0].find_element_by_tag_name('a').get_attribute('href')
-            driver.get(curr_href)
-            #driver.find_element_by_css_selector("a[href='{}'".format(curr_href))
-            processed_votes_for_bill = getSenatorVotesForOneBill(driver)
-            driver.back()
+            hrefs_for_votes_webpages.append((curr_href, current_bill))
 
-            print(processed_votes_for_bill)
 
-            # update the dict
-            pass
+
+    # now, get all the data from those pages
+    for href in hrefs_for_votes_webpages:
+        driver.get(href[0])
+        print(getSenatorVotesForOneBill(driver))
+
 
 
 
