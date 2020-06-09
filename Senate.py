@@ -181,7 +181,10 @@ def getVotesForAllBillsForOneYear(driver):
             hrefs_for_votes_webpages.append((curr_href, current_bill))
 
 
-
+    '''
+    THIS PART IS NOT DONE!!! we need to save the results from getSenatorVotesForOneBill(driver)
+    and add it to some structure (it'll be a JSON object that we'll use to get all the data)
+    '''
     # now, get all the data from those pages
     for href in hrefs_for_votes_webpages:
         driver.get(href[0])
