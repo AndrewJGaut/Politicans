@@ -2,6 +2,39 @@ from Utility import *
 import pprint
 
 
+class Bill:
+    def __init__(self, tally, result, description, issue, date, url):
+        self.tally = tally # the total tally of votes on the bill for all senators
+        self.result = result # whether or not it was passed
+        self.description = description # description of the bill
+        self.issue = issue # the name of hte bill
+        self.date = date # CHECK ON THIS
+        self.url = url # url that gives the offical page of the bill
+
+
+    @classmethod
+    def initFromTableData(cls, table_datas):
+        '''
+
+        :param table_data: a list of td elements that MUST be in the order vote, result, description, issue, date
+        :return: initializes the object
+        '''
+        vote = table_datas[0].text
+        result = table_datas[1].text
+        description = table_datas[2].text
+        issue = table_datas[3].text
+        date = table_datas[4].text
+
+        url = table_datas[3].find_element_by_tag_name('a').get_attribute('href')
+
+        return cls(vote, result, description, issue, date, url)
+
+    def __dict__(self):
+        # only return the member variables (NOT FUNCTIONS) when printing the dictionary for this object
+        # use this override so we can json serialize this object when we write it
+        return vars(self)
+
+
 
 
 def getSenatorVotesForOneBill(driver):
@@ -86,20 +119,76 @@ def getVotesForAllBillsForOneYear(driver):
     :return:
     '''
 
+
+
+
+    def getTextForColumn(table_datas, columns, column_name):
+        '''
+        :param column_name: the name of the column in the table for which we want info
+        :return: the text data in the td element under th ecolumn in the table with name column_name
+        '''
+        return  table_datas[columns.index(column_name)].text
+
+    def isBill(bill):
+        '''
+
+        :param bill: a bill object
+        :return: whetehr or not this particular table row represents a vote for a bill or not.
+        '''
+
+        issue = bill.issue
+
+        for prefix in PREFIXES_FOR_BILLS:
+            if prefix in issue:
+                return True
+
+        return False
+
+
+
+    # this is the name of the column in the table that gives us the name of what the senators voted on
+    # this will be used when we determine if its a bill or not
+
+    NAME_OF_COLUMN_FOR_ISSUE_NAME = "Issue"
+
+    # these are prefixes for issue names that indicate that the issue is a bill
+    PREFIXES_FOR_BILLS = ["H.R."]
+
+    # keys for the items we use to represent bills
+    return_dict = list()
+
     table = driver.find_element_by_id('listOfVotes')
 
+    # get the column header names of the table
+    #columns = [element.text for element in table.find_element_by_tag_name('thead').find_elements_by_tag_name('th')]
+
     for table_row in table.find_elements_by_tag_name('tr'):
-        # get all the td elements
+        table_datas = table_row.find_elements_by_tag_name('td')
+
+        if len(table_datas) == 0:
+            continue
+
+        current_bill = Bill.initFromTableData(table_datas)
 
         # for each row, we first want to check if this row represents a bill vote.
+        # if it isn't, then just ignore this table row
+        if isBill(current_bill):
+
+            # get the processed votes
+            #votes_url = '/'.join(driver.current_url.split('/')[:-1]) + table_datas[0].find_element_by_tag_name('a').get_attribute('href')
+            #driver.get(votes_url)
+            curr_href = table_datas[0].find_element_by_tag_name('a').get_attribute('href')
+            driver.get(curr_href)
+            #driver.find_element_by_css_selector("a[href='{}'".format(curr_href))
+            processed_votes_for_bill = getSenatorVotesForOneBill(driver)
+            driver.back()
+
+            print(processed_votes_for_bill)
+
+            # update the dict
+            pass
 
 
-        # next, we'll get the bill name and URL
-
-        # get the votes by clicking on the link, calling function, and stepping back to the current page
-        driver.get('url')
-        processed_votes_for_bill = getSenatorVotesForOneBill(driver)
-        driver.back()
 
         # update the dictionary object
 
@@ -116,8 +205,10 @@ def getVotesForAllBillsForOneYear(driver):
 
 driver = getDriver()
 #driver.get("https://www.senate.gov/legislative/LIS/roll_call_lists/roll_call_vote_cfm.cfm?congress=116&session=2&vote=00114")
-driver.get("file:///Users/agaut/PycharmProjects/Politicans/HtmlFilesForTesting/senate_names.html")
-getSenatorVotesForOneBill(driver)
+#driver.get("file:///Users/agaut/PycharmProjects/Politicans/HtmlFilesForTesting/senate_names.html")
+driver.get("https://www.senate.gov/legislative/LIS/roll_call_lists/vote_menu_116_2.htm")
+#getSenatorVotesForOneBill(driver)
+getVotesForAllBillsForOneYear(driver)
 
 pp = pprint.PrettyPrinter(width=41, compact=True)
 
